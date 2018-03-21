@@ -1,0 +1,18 @@
+{
+  "name": "crypton-escrow-contract",
+  "version": "1.0.0",
+  "description": "This repository contains basic ESCROW smart contract for Etherium blockchain.",
+  "main": "",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "npx truffle test",
+    "compile": "npx truffle compile"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "truffle": "^4.1.3"
+  }
+}

@@ -1,0 +1,7 @@
+#Node
+node_modules/
+#Idea (WebStorm, PhpStorm,etc)
+.idea/
+#Buid version
+build/
+!.gitkeep
