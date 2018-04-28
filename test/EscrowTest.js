@@ -146,4 +146,18 @@ contract('Escrow', function (accounts) {
         }
 
     });
+
+    it("should getAddressVote calculate withdraw cont", async function () {
+        web3.eth.sendTransaction({from: testAccounts.sender, to: this.escrow.contract.address, value: testAmount});
+        assert.equal(await this.escrow.getAddressVote.call(testAccounts.sender),0);
+        await this.escrow.withdraw({from: testAccounts.sender});
+        assert.equal(await this.escrow.getAddressVote.call(testAccounts.sender),1);
+    });
+
+    it("should getAddressVote calculate refund cont", async function () {
+        web3.eth.sendTransaction({from: testAccounts.sender, to: this.escrow.contract.address, value: testAmount});
+        assert.equal(await this.escrow.getAddressVote.call(testAccounts.sender),0);
+        await this.escrow.refund({from: testAccounts.sender});
+        assert.equal(await this.escrow.getAddressVote.call(testAccounts.sender),-1);
+    });
 });

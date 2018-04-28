@@ -135,7 +135,18 @@ contract Escrow {
     **/
     function() onlySender onlyIfNoFinished public payable {//default payable function
         emit PaymentReceived(msg.sender, msg.value);
+    }
 
-
+    /**
+    * Getter user vote status '1' - withdraw  '-1' refund, '0' - no vote
+    **/
+    function getAddressVote(address userAddress) public view returns (int8){
+        if ((oneTimeCallMapping['withdraw'].totalCall > 0) && oneTimeCallMapping['withdraw'].sender[userAddress]){
+            return 1;
+        }
+        if ((oneTimeCallMapping['refund'].totalCall > 0) && oneTimeCallMapping['refund'].sender[userAddress]){
+            return -1;
+        }
+        return 0;
     }
 }
