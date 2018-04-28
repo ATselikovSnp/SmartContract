@@ -73,6 +73,7 @@ contract('Escrow', function (accounts) {
         await this.escrow.withdraw({from: testAccounts.sender});
         let receiverBalanceAfter = web3.eth.getBalance(testAccounts.receiver);
         assert.equal(receiverBalance.plus(testAmount).toString(),receiverBalanceAfter.toString());
+        assert.isFalse(await this.escrow.refunded.call());
     });
 
     it("should allow refund only after payment", async function () {
@@ -102,6 +103,7 @@ contract('Escrow', function (accounts) {
         await this.escrow.refund({from: testAccounts.receiver});
         let senderBalanceAfter = web3.eth.getBalance(testAccounts.sender);
         assert.equal(senderBalance.plus(testAmount).toString(),senderBalanceAfter.toString());
+        assert.isTrue(await this.escrow.refunded.call());
     });
 
     it("should withdraw with 2 withdraw and one refund", async function () {

@@ -1,4 +1,4 @@
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.23;
 
 contract Escrow {
 
@@ -24,7 +24,12 @@ contract Escrow {
     /**
     * Flag show that escrow and finished (do not allow to send money into black hole)
     **/
-    bool finished = false;
+    bool public finished = false;
+
+    /**
+    * Flag show that escrow and refunded
+    **/
+    bool public refunded = false;
 
 
     /**
@@ -51,7 +56,7 @@ contract Escrow {
     * Allow only sender
     **/
     modifier onlyIfPayed() {
-        require(this.balance > 0);
+        require(address(this).balance > 0);
         _;
     }
     /**
@@ -76,11 +81,16 @@ contract Escrow {
     }
 
     /**
-    * Allow to call function once only
+    * Event that provide emitted on payments
     * @param sender address of sender
     * @param amount amount of ether
     **/
     event PaymentReceived(address sender, uint amount);
+
+    /**
+    * Event that emitted on finalization of smart contract
+    **/
+    event Finalized();
 
 
     /**
@@ -89,7 +99,7 @@ contract Escrow {
     * @param _receiver address of receiver
     * @param _arbiter address of arbiter
     **/
-    function Escrow(address _sender, address _receiver, address _arbiter) public {
+    constructor(address _sender, address _receiver, address _arbiter) public {
         sender = _sender;
         receiver = _receiver;
         arbiter = _arbiter;
@@ -101,8 +111,9 @@ contract Escrow {
     * only if 2 users confirmed process
     **/
     function withdraw() onlyMembers onlyIfPayed oneTimeCall('withdraw') public returns (bool){
-        receiver.transfer(this.balance);
+        receiver.transfer(address(this).balance);
         finished = true;
+        emit Finalized();
         return true;
 
     }
@@ -112,16 +123,18 @@ contract Escrow {
     * only if 2 users confirmed process
     **/
     function refund() onlyMembers onlyIfPayed oneTimeCall('refund') public returns (bool){
-        sender.transfer(this.balance);
+        sender.transfer(address(this).balance);
+        refunded = true;
         finished = true;
+        emit Finalized();
+        return true;
     }
 
     /**
     * Default payable function
     **/
-    function() onlySender onlyIfNoFinished public payable {//should be default payable function?
-        //emit PaymentReceived(msg.sender, msg.value); // Use this version after truffle update. Solc 0.4.21+
-        PaymentReceived(msg.sender, msg.value);// Triggering event
+    function() onlySender onlyIfNoFinished public payable {//default payable function
+        emit PaymentReceived(msg.sender, msg.value);
 
 
     }
