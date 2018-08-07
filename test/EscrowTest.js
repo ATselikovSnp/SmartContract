@@ -16,7 +16,7 @@ contract('Escrow', function (accounts) {
     });
 
     beforeEach(async function () {
-        this.escrow = await Escrow.new(testAccounts.sender, testAccounts.receiver, testAccounts.arbiter);
+        this.escrow = await Escrow.new(testAccounts.sender, testAccounts.receiver, testAccounts.arbiter, testAmount);
         //let blockNumber = web3.eth.getTransaction(this.escrow.transactionHash).blockNumber;
         //console.log("Gas used to deploy contract", web3.eth.getBlock(blockNumber).gasUsed);
         //console.log("Contract address", this.escrow.contract.address);
@@ -130,23 +130,6 @@ contract('Escrow', function (accounts) {
         assert.equal(receiverBalance.plus(testAmount).toString(),receiverBalanceAfter.toString());
     });
 
-    it("should be able to send currency unlit escrow is finished", async function () {
-        web3.eth.sendTransaction({from: testAccounts.sender, to: this.escrow.contract.address, value: testAmount});
-        web3.eth.sendTransaction({from: testAccounts.sender, to: this.escrow.contract.address, value: testAmount});
-        assert.equal(web3.eth.getBalance(this.escrow.contract.address), testAmount*2);
-        await this.escrow.withdraw({from: testAccounts.receiver});
-        let receiverBalance = web3.eth.getBalance(testAccounts.receiver);
-        await this.escrow.withdraw({from: testAccounts.sender});
-        let receiverBalanceAfter = web3.eth.getBalance(testAccounts.receiver);
-        assert.equal(receiverBalance.plus(testAmount).plus(testAmount).toString(),receiverBalanceAfter.toString());
-        try {
-            web3.eth.sendTransaction({from: testAccounts.sender, to: this.escrow.contract.address, value: testAmount});
-        } catch (e) {
-            assertRevert.errorOnly(e);
-        }
-
-    });
-
     it("should getAddressVote calculate withdraw cont", async function () {
         web3.eth.sendTransaction({from: testAccounts.sender, to: this.escrow.contract.address, value: testAmount});
         assert.equal(await this.escrow.getAddressVote.call(testAccounts.sender),0);
@@ -159,5 +142,32 @@ contract('Escrow', function (accounts) {
         assert.equal(await this.escrow.getAddressVote.call(testAccounts.sender),0);
         await this.escrow.refund({from: testAccounts.sender});
         assert.equal(await this.escrow.getAddressVote.call(testAccounts.sender),-1);
+    });
+    it("should not allow to transfer amount different than specified in contract", async function(){
+        let senderBalance = web3.eth.getBalance(testAccounts.sender);
+        try {
+            web3.eth.sendTransaction({from: testAccounts.sender, to: this.escrow.contract.address, value: testAmount+1})
+        } catch (e) {
+            assertRevert.errorOnly(e);
+        }
+    });
+    it("should not allow to transfer if contract balance is more than 0", async function(){
+        web3.eth.sendTransaction({from: testAccounts.sender, to: this.escrow.contract.address, value: testAmount});
+        try{
+            web3.eth.sendTransaction({from: testAccounts.sender, to: this.escrow.contract.address, value: testAmount});
+        }catch (e) {
+            assertRevert.errorOnly(e);
+        }
+        assert.equal(web3.eth.getBalance(this.escrow.contract.address).toString(), testAmount);
+        await this.escrow.withdraw({from: testAccounts.receiver});
+        let receiverBalance = web3.eth.getBalance(testAccounts.receiver);
+        await this.escrow.withdraw({from: testAccounts.sender});
+        let receiverBalanceAfter = web3.eth.getBalance(testAccounts.receiver);
+        assert.equal(receiverBalance.plus(testAmount).toString(),receiverBalanceAfter.toString());
+        try {
+            web3.eth.sendTransaction({from: testAccounts.sender, to: this.escrow.contract.address, value: testAmount});
+        } catch (e) {
+            assertRevert.errorOnly(e);
+        }
     });
 });

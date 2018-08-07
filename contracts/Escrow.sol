@@ -9,6 +9,8 @@ contract Escrow {
     address private receiver;
     address private arbiter;
 
+    uint256 private amount;
+
     /**
     * Structure to control call function numbers
     **/
@@ -31,6 +33,15 @@ contract Escrow {
     **/
     bool public refunded = false;
 
+    modifier onlyIfNotPayed(){
+        require (address(this).balance == amount);
+        _;
+    }
+
+    modifier onlyIfCorrectAmount(){
+        require (msg.value == amount);
+        _;
+    }
 
     /**
     * Allow only smart contract member
@@ -72,6 +83,7 @@ contract Escrow {
     * @param name name of function
     **/
     modifier oneTimeCall(string name) {
+        emit Voted();
         require(oneTimeCallMapping[name].sender[msg.sender] == false);
         if (oneTimeCallMapping[name].totalCall == 1) {//we increment value after, so this is a second call
             _;
@@ -88,6 +100,11 @@ contract Escrow {
     event PaymentReceived(address sender, uint amount);
 
     /**
+    * Event that emitted on voting of smart contract participants
+    **/
+    event Voted();
+
+    /**
     * Event that emitted on finalization of smart contract
     **/
     event Finalized();
@@ -99,10 +116,11 @@ contract Escrow {
     * @param _receiver address of receiver
     * @param _arbiter address of arbiter
     **/
-    constructor(address _sender, address _receiver, address _arbiter) public {
+    constructor(address _sender, address _receiver, address _arbiter, uint256 _amount) public {
         sender = _sender;
         receiver = _receiver;
         arbiter = _arbiter;
+        amount = _amount;
     }
 
 
@@ -133,7 +151,8 @@ contract Escrow {
     /**
     * Default payable function
     **/
-    function() onlySender onlyIfNoFinished public payable {//default payable function
+    function() onlySender onlyIfNoFinished onlyIfCorrectAmount onlyIfNotPayed public payable {//default payable function
+
         emit PaymentReceived(msg.sender, msg.value);
     }
 
